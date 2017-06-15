@@ -1,10 +1,12 @@
 package com.shrp.pong;
 
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.view.View;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.TextView;
 
 /**
@@ -14,8 +16,8 @@ import android.widget.TextView;
 public class GameActivity extends Activity implements View.OnClickListener {
 
     GameView pongView;
-    Button bStart;
     boolean started;
+    PowerManager.WakeLock wl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,11 +25,16 @@ public class GameActivity extends Activity implements View.OnClickListener {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_game);
 
-        pongView = (GameView) findViewById(R.id.gvPong);
-        //pongView.setVisibility(View.INVISIBLE);
-        pongView.setTextView((TextView) findViewById(R.id.tvStatus));
-        started = false;
+        Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/ABeeZee-Regular.ttf");
 
+        pongView = (GameView) findViewById(R.id.gvPong);
+        TextView tv = (TextView) findViewById(R.id.tvStatus);
+        tv.setTypeface(typeface);
+        pongView.setTextView(tv);
+        tv = (TextView) findViewById(R.id.tvTime);
+        tv.setTypeface(typeface);
+        pongView.setTimeTextView(tv);
+        started = false;
 
         GameThread thread = pongView.getGameThread();
         thread.doStart();
@@ -38,11 +45,17 @@ public class GameActivity extends Activity implements View.OnClickListener {
         super.onPause();
         GameThread thread = pongView.getGameThread();
         thread.pauseGame();
+        if(wl != null && wl.isHeld()) {
+            wl.release();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "game");
+        wl.acquire();
         GameThread thread = pongView.getGameThread();
         if(started) {
             thread.resumeGame();
@@ -53,6 +66,10 @@ public class GameActivity extends Activity implements View.OnClickListener {
     protected void onDestroy() {
         super.onDestroy();
         started = false;
+        if(wl != null) {
+            if(wl.isHeld())
+                wl.release();
+        }
         SoundManager.cleanup();
     }
 
@@ -64,13 +81,7 @@ public class GameActivity extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.bStart:
-                bStart.setVisibility(View.INVISIBLE);
-                pongView.setVisibility(View.VISIBLE);
-                GameThread thread = pongView.getGameThread();
-                thread.doStart();
-                started = true;
-                break;
+
         }
     }
 }

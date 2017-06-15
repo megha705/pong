@@ -8,7 +8,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
 import android.view.SurfaceHolder.Callback;
 import android.widget.TextView;
 
@@ -21,6 +20,7 @@ public class GameView extends SurfaceView implements Callback {
     private Context context;
     private SurfaceHolder holder;
     private TextView status;
+    private TextView time;
 
     private GameThread _thread;
 
@@ -39,6 +39,10 @@ public class GameView extends SurfaceView implements Callback {
         this.status = tv;
     }
 
+    public void setTimeTextView(TextView tv) {
+        this.time = tv;
+    }
+
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         _thread.setRunning(true);
@@ -52,13 +56,16 @@ public class GameView extends SurfaceView implements Callback {
     }
 
     private GameThread createNewGameThread() {
-        return new GameThread(holder, context, new Handler(){
+
+        return new GameThread(holder, context, new Handler() {
             @Override
-            public void handleMessage(Message m) {
-                Bundle data = m.getData();
+            public void handleMessage(Message message) {
+                Bundle data = message.getData();
                 if(data.containsKey("visibility")) {
-                    status.setVisibility(m.getData().getInt("visibility"));
-                    status.setText(m.getData().getString("score"));
+                    status.setVisibility(data.getInt("visibility"));
+                    time.setVisibility(data.getInt("visibility"));
+                    status.setText(data.getString("score"));
+                    time.setText(data.getString("time"));
                 }
             }
         });
